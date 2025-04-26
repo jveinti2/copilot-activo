@@ -8,7 +8,8 @@ import {
   httpsignature as httpsig,
   isUuid,
 } from "../audiohook";
-import { SessionWebsocketStatsTracker } from "./session-websocket-stats-tracker";
+import { getResponseGuru } from "./services/rfp-guru.service";
+// import { SessionWebsocketStatsTracker } from "./session-websocket-stats-tracker";
 const g711 = require("g711");
 
 dotenv.config();
@@ -105,7 +106,8 @@ export const addAudiohookSampleRoute = (
       const VAD_SILENCE_THRESHOLD_MS = 800; // Tiempo de silencio para procesar (ms)
 
       // Create a proxy for the WebSocket that tracks statistics
-      const ws = new SessionWebsocketStatsTracker(connection.socket);
+      // const ws = new SessionWebsocketStatsTracker(connection.socket);
+      const ws = connection.socket;
 
       // Función para convertir μ-law a PCM para VAD
       const convertMuLawToPCM = (muLawData: Uint8Array): Buffer => {
@@ -193,17 +195,19 @@ export const addAudiohookSampleRoute = (
                 },
               }
             );
-
-            // Mostrar resultado de la transcripción
             if (response.data.text && response.data.text.trim() !== "") {
-              transcripcionesRealizadas++;
               console.log("\n" + "-".repeat(80));
-              console.log(`📝 TRANSCRIPCIÓN #${transcripcionesRealizadas}:`);
-              console.log("-".repeat(80));
-              console.log(`${response.data.text}`);
-              console.log("-".repeat(80));
-            } else {
-              console.log(`📝 No se detectó texto en la transcripción`);
+              console.log(`📝 Nueva trasncript: {response.data.text}`);
+            }
+
+            const text_to_guru = response.data.text;
+            const response_guru: string | any = await getResponseGuru(
+              text_to_guru
+            );
+
+            if (response_guru && response_guru.trim() !== "") {
+              console.log("\n" + "-".repeat(80));
+              console.log(`🤖 Nueva respuesta: {response_guru}`);
             }
 
             // Limpiar archivo temporal
@@ -355,7 +359,7 @@ export const addAudiohookSampleRoute = (
       });
 
       // Register handler for statistics tracking proxy
-      session.addOpenHandler(ws.createTrackingHandler());
+      // session.addOpenHandler(ws.createTrackingHandler());
     }
   );
 };

@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 import Fastify, { FastifyInstance } from "fastify";
 import { pino } from "pino";
 import { PrettyOptions } from "pino-pretty";
-import { addAudiohookSampleRoute } from "./audiohook-sample-endpoint";
-import serviceLifecylePlugin from "./service-lifecycle-plugin";
+import { addAudiohookSampleRoute } from "./services/audiohook.service";
+import serviceLifecylePlugin from "./utils/service-lifecycle.util";
 
 dotenv.config();
 

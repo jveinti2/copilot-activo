@@ -4,10 +4,9 @@ import FormData from "form-data";
 import fs from "fs";
 import { Configuration, OpenAIApi } from "openai";
 
-// Asegurar que dotenv se carga primero
+// Configuración básica
 dotenv.config();
 
-// Configuración de la API de OpenAI
 const OPENAI_API_KEY = process.env["OPENAI_API_KEY"] || "";
 console.log(
   "Estado API KEY:",
@@ -16,17 +15,16 @@ console.log(
 
 if (!OPENAI_API_KEY) {
   console.warn(
-    "⚠️ No se ha configurado OPENAI_API_KEY en las variables de entorno. La transcripción con Whisper no funcionará correctamente."
+    "⚠️ No se ha configurado OPENAI_API_KEY en las variables de entorno."
   );
 }
 
-// Inicializar el cliente de OpenAI
 const configuration = new Configuration({
   apiKey: OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
 
-// Tipo para la respuesta de la transcripción de Whisper
+// Tipos de datos
 export interface WhisperTranscriptionResult {
   text: string;
   segments: Array<{
@@ -39,7 +37,6 @@ export interface WhisperTranscriptionResult {
   }>;
 }
 
-// Tipo para la respuesta extendida de OpenAI (no está incluido en la definición oficial)
 interface OpenAIVerboseResponse {
   text: string;
   segments?: Array<{
@@ -52,11 +49,7 @@ interface OpenAIVerboseResponse {
   }>;
 }
 
-/**
- * Envía un archivo de audio a la API de OpenAI Whisper para transcribirlo
- * @param audioFilePath Ruta al archivo de audio a transcribir
- * @returns Promesa que resuelve con el resultado de la transcripción
- */
+// Función principal para transcribir audio
 export async function transcribeWithWhisper(
   audioFilePath: string
 ): Promise<WhisperTranscriptionResult> {
@@ -67,17 +60,9 @@ export async function transcribeWithWhisper(
   }
 
   try {
-    // Enfoque más básico y directo
     const formData = new FormData();
-
-    // Añadir el archivo directamente como un buffer con nombre
     const fileBuffer = fs.readFileSync(audioFilePath);
 
-    // Crear una copia del archivo para inspección
-    const debugFilePath = audioFilePath.replace(".wav", "-debug.wav");
-    fs.writeFileSync(debugFilePath, fileBuffer);
-
-    // Añadir el archivo a FormData con nombre específico
     formData.append("file", fileBuffer, {
       filename: "audio.wav",
       contentType: "audio/wav",
@@ -87,7 +72,6 @@ export async function transcribeWithWhisper(
     formData.append("response_format", "verbose_json");
     formData.append("language", "es");
 
-    // Configuración más detallada para la petición HTTP
     const response = await axios.post(
       "https://api.openai.com/v1/audio/transcriptions",
       formData,
@@ -98,14 +82,8 @@ export async function transcribeWithWhisper(
         },
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
-        timeout: 30000, // 30 segundos de timeout
+        timeout: 30000,
       }
-    );
-
-    // Guardar respuesta completa para depuración
-    fs.writeFileSync(
-      audioFilePath.replace(".wav", "-response.json"),
-      JSON.stringify(response.data, null, 2)
     );
 
     // Adaptar la respuesta al formato WhisperTranscriptionResult
@@ -142,49 +120,6 @@ export async function transcribeWithWhisper(
       // Ignorar errores de escritura
     }
 
-    // Propagar el error en lugar de devolver una simulación
     throw error;
   }
-}
-
-/**
- * Genera una respuesta simulada para casos de prueba o cuando falla la API
- */
-function simulateWhisperResponse(): WhisperTranscriptionResult {
-  console.log(
-    "[Whisper Simulation] Generando transcripción simulada más realista"
-  );
-
-  // Creamos una respuesta simulada con texto más normal/esperado
-  const simulatedResponse: WhisperTranscriptionResult = {
-    text: "Hola, estoy probando el sistema de transcripción en tiempo real. ¿Cómo funciona?",
-    segments: [
-      {
-        id: 0,
-        start: 0.0,
-        end: 2.0,
-        text: "Hola, estoy probando",
-        tokens: [1, 2, 3, 4],
-        confidence: 0.95,
-      },
-      {
-        id: 1,
-        start: 2.0,
-        end: 3.5,
-        text: "el sistema de transcripción",
-        tokens: [5, 6, 7, 8],
-        confidence: 0.92,
-      },
-      {
-        id: 2,
-        start: 3.5,
-        end: 5.0,
-        text: "en tiempo real. ¿Cómo funciona?",
-        tokens: [9, 10, 11, 12, 13],
-        confidence: 0.9,
-      },
-    ],
-  };
-
-  return simulatedResponse;
 }
