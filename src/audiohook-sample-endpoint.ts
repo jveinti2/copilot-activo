@@ -1,19 +1,14 @@
-import { FastifyInstance } from "fastify";
+import axios from "axios";
 import dotenv from "dotenv";
-import ByteBuffer from "bytebuffer";
+import { FastifyInstance } from "fastify";
+import FormData from "form-data";
 import fs from "fs";
-import path from "path";
 import {
-  isUuid,
-  httpsignature as httpsig,
-  ServerSession,
   createServerSession,
+  httpsignature as httpsig,
+  isUuid,
 } from "../audiohook";
 import { SessionWebsocketStatsTracker } from "./session-websocket-stats-tracker";
-import { VoiceActivityDetector } from "./sim-transcribe/voice-activity-detection/voice-activity-detection";
-import { transcribeWithWhisper } from "./whisper-transcription";
-import axios from "axios";
-import FormData from "form-data";
 const g711 = require("g711");
 
 dotenv.config();

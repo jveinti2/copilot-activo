@@ -1,13 +1,8 @@
-import fs from "fs";
-import path from "path";
-import { StreamDuration } from "../audiohook";
-import { makeTranscript } from "./sim-transcribe/make-transcript";
-import { MediaChannelId, LanguageCode } from "../audiohook/src/protocol";
-import { VoiceEvent } from "./sim-transcribe/voice-activity-detection/voice-event";
-import dotenv from "dotenv";
-import { Configuration, OpenAIApi } from "openai";
 import axios from "axios";
+import dotenv from "dotenv";
 import FormData from "form-data";
+import fs from "fs";
+import { Configuration, OpenAIApi } from "openai";
 
 // Asegurar que dotenv se carga primero
 dotenv.config();
@@ -192,50 +187,4 @@ function simulateWhisperResponse(): WhisperTranscriptionResult {
   };
 
   return simulatedResponse;
-}
-
-/**
- * Convierte una respuesta de Whisper al formato de transcripción usado por AudioHook
- * @param whisperResult Resultado de la transcripción de Whisper
- * @param channelId ID del canal de media
- * @param startTime Tiempo de inicio del segmento de audio
- * @param language Código de idioma
- * @returns Objeto de transcripción en formato AudioHook
- */
-export function convertWhisperToAudioHookTranscript(
-  whisperResult: WhisperTranscriptionResult,
-  channelId: MediaChannelId,
-  startTime: StreamDuration,
-  language: LanguageCode
-) {
-  // Creamos un VoiceEvent simulado con la duración total del audio transcrito
-  const totalDuration =
-    whisperResult.segments.length > 0
-      ? whisperResult.segments[whisperResult.segments.length - 1].end
-      : 4.0;
-
-  const voiceEvent = {
-    getStartTime: () => 0,
-    getEndTime: () => totalDuration,
-  } as VoiceEvent;
-
-  // Usamos la función existente makeTranscript para crear un objeto de transcripción
-  // compatible con AudioHook
-  const transcript = makeTranscript(channelId, voiceEvent, language, startTime);
-
-  // Si transcript existe, modificamos su contenido para usar el texto de Whisper
-  if (
-    transcript &&
-    transcript.alternatives &&
-    transcript.alternatives.length > 0
-  ) {
-    const alternative = transcript.alternatives[0];
-    if (alternative.interpretations && alternative.interpretations.length > 0) {
-      alternative.interpretations[0].transcript = whisperResult.text;
-
-      // También podríamos ajustar los tokens aquí si fuera necesario
-    }
-  }
-
-  return transcript;
 }

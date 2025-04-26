@@ -1,4 +1,6 @@
 import {
+  Duration,
+  JsonObject,
   MediaParameter,
   OnAudioHandler,
   OnDiscardedHandler,
@@ -6,8 +8,6 @@ import {
   OpenHandler,
   ServerWebSocket,
   StreamDuration,
-  JsonObject,
-  Duration,
 } from "../audiohook";
 
 export type SessionWebsocketStatsTrackerSummary = {

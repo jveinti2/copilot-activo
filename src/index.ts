@@ -1,10 +1,10 @@
-import Fastify, { FastifyInstance } from "fastify";
 import websocket from "@fastify/websocket";
 import dotenv from "dotenv";
+import Fastify, { FastifyInstance } from "fastify";
 import { pino } from "pino";
 import { PrettyOptions } from "pino-pretty";
-import serviceLifecylePlugin from "./service-lifecycle-plugin";
 import { addAudiohookSampleRoute } from "./audiohook-sample-endpoint";
+import serviceLifecylePlugin from "./service-lifecycle-plugin";
 
 dotenv.config();
 
