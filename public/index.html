@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat RFP Guru</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      #messages {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        height: 400px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .message {
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 5px;
+      }
+      .transcript {
+        background: #e3f2fd;
+      }
+      .response {
+        background: #f3e5f5;
+      }
+      .timestamp {
+        font-size: 0.8em;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Chat RFP Guru</h1>
+    <div id="messages"></div>
+    <div id="status">Estado: Desconectado</div>
+
+    <script>
+      let ws;
+      const messagesDiv = document.getElementById("messages");
+      const statusDiv = document.getElementById("status");
+
+      function connect() {
+        ws = new WebSocket("ws://" + window.location.host + "/ws");
+
+        ws.onopen = () => {
+          statusDiv.textContent = "Estado: Conectado";
+          statusDiv.style.color = "green";
+        };
+
+        ws.onclose = () => {
+          statusDiv.textContent = "Estado: Desconectado - Reconectando...";
+          statusDiv.style.color = "red";
+          setTimeout(connect, 1000);
+        };
+
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+          const messageDiv = document.createElement("div");
+          messageDiv.className = `message ${data.type}`;
+
+          const timestamp = new Date().toLocaleTimeString();
+          messageDiv.innerHTML = `
+                    <div class="timestamp">${timestamp}</div>
+                    <div>${
+                      data.type === "transcript"
+                        ? "Transcripción: "
+                        : "Respuesta: "
+                    } ${data.text}</div>
+                `;
+
+          messagesDiv.appendChild(messageDiv);
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        };
+      }
+
+      connect();
+    </script>
+  </body>
+</html>
