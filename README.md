@@ -1,4 +1,4 @@
-# Servidor Audiohook Simplificado
+# Copilot Activo
 
 Este proyecto es una implementación simplificada de un servidor Audiohook para Genesys Cloud. Se ha simplificado para eliminar dependencias de AWS y enfocarse en recibir el audio sin almacenamiento.
 
