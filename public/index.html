@@ -36,53 +36,89 @@
         font-size: 0.8em;
         color: #666;
       }
+      #status {
+        padding: 8px;
+        border-radius: 4px;
+        margin-bottom: 15px;
+      }
+      .connected {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+      .disconnected {
+        background-color: #ffebee;
+        color: #c62828;
+      }
     </style>
   </head>
   <body>
     <h1>Chat RFP Guru</h1>
+    <div id="status" class="disconnected">Estado: Desconectado</div>
     <div id="messages"></div>
-    <div id="status">Estado: Desconectado</div>
 
     <script>
       let ws;
       const messagesDiv = document.getElementById("messages");
       const statusDiv = document.getElementById("status");
 
+      function formatTime(isoString) {
+        const date = new Date(isoString || Date.now());
+        return date.toLocaleTimeString();
+      }
+
       function connect() {
-        ws = new WebSocket("ws://" + window.location.host + "/ws");
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        console.log(`Conectando a ${wsUrl}`);
+
+        ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {
           statusDiv.textContent = "Estado: Conectado";
-          statusDiv.style.color = "green";
+          statusDiv.className = "connected";
+          console.log("WebSocket conectado");
         };
 
         ws.onclose = () => {
           statusDiv.textContent = "Estado: Desconectado - Reconectando...";
-          statusDiv.style.color = "red";
-          setTimeout(connect, 1000);
+          statusDiv.className = "disconnected";
+          console.log("WebSocket desconectado, intentando reconectar...");
+          setTimeout(connect, 3000);
+        };
+
+        ws.onerror = (error) => {
+          console.error("Error en WebSocket:", error);
         };
 
         ws.onmessage = (event) => {
-          const data = JSON.parse(event.data);
-          const messageDiv = document.createElement("div");
-          messageDiv.className = `message ${data.type}`;
+          console.log("Mensaje recibido:", event.data);
+          try {
+            const data = JSON.parse(event.data);
+            const messageDiv = document.createElement("div");
+            messageDiv.className = `message ${data.type}`;
 
-          const timestamp = new Date().toLocaleTimeString();
-          messageDiv.innerHTML = `
-                    <div class="timestamp">${timestamp}</div>
-                    <div>${
-                      data.type === "transcript"
-                        ? "Transcripción: "
-                        : "Respuesta: "
-                    } ${data.text}</div>
-                `;
+            const timestamp = formatTime(data.timestamp);
 
-          messagesDiv.appendChild(messageDiv);
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            let messageHeader =
+              data.type === "transcript"
+                ? "🎤 Transcripción: "
+                : "🤖 Respuesta: ";
+
+            messageDiv.innerHTML = `
+              <div class="timestamp">${timestamp}</div>
+              <div>${messageHeader}${data.text}</div>
+            `;
+
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          } catch (error) {
+            console.error("Error procesando mensaje:", error);
+          }
         };
       }
 
-      connect();
+      // Iniciar conexión cuando se carga la página
+      window.addEventListener("load", connect);
     </script>
   </body>
 </html>

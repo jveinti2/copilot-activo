@@ -9,6 +9,7 @@ import {
   isUuid,
 } from "../../audiohook";
 import { getResponseGuru } from "./rfp-guru.service";
+import { broadcastMessage } from "./websocket.service";
 const g711 = require("g711");
 
 dotenv.config();
@@ -189,6 +190,13 @@ export const addAudiohookSampleRoute = (
             if (response.data.text && response.data.text.trim() !== "") {
               console.log("\n" + "-".repeat(80));
               console.log(`📝 Nueva trasncript: ${response.data.text}`);
+
+              // Enviar transcripción al WebSocket
+              broadcastMessage({
+                type: "transcript",
+                text: response.data.text,
+                timestamp: new Date().toISOString(),
+              });
             }
 
             const text_to_guru = response.data.text;
@@ -199,6 +207,13 @@ export const addAudiohookSampleRoute = (
             if (response_guru && response_guru.trim() !== "") {
               console.log("\n" + "-".repeat(80));
               console.log(`🤖 Nueva respuesta: ${response_guru}`);
+
+              // Enviar respuesta al WebSocket
+              broadcastMessage({
+                type: "response",
+                text: response_guru,
+                timestamp: new Date().toISOString(),
+              });
             }
 
             // Limpiar archivo temporal
