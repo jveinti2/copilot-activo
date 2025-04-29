@@ -77,6 +77,7 @@
           statusDiv.textContent = "Estado: Conectado";
           statusDiv.className = "connected";
           console.log("WebSocket conectado");
+          console.log("wsUrl:", wsUrl);
         };
 
         ws.onclose = () => {
