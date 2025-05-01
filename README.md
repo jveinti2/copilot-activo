@@ -1,75 +1,52 @@
-# Copilot Activo
+# Copilot Activo - Audiohook Reference Implementation
 
-Este proyecto es una implementación simplificada de un servidor Audiohook para Genesys Cloud. Se ha simplificado para eliminar dependencias de AWS y enfocarse en recibir el audio sin almacenamiento.
+## Descripción
 
-## Requisitos
+Copilot Activo es una aplicación de referencia para la transcripción y respuesta automática de llamadas en tiempo real, orientada a contact centers. Recibe audio vía WebSocket, transcribe la voz a texto, sintetiza la pregunta del cliente y responde usando un modelo de IA. Incluye una interfaz web tipo chat para visualizar la conversación en tiempo real.
+
+## Arquitectura
+
+- **Frontend:** HTML/JS simple (sin frameworks), WebSocket para mensajes en tiempo real.
+- **Backend:** Node.js + Fastify, WebSocket, procesamiento de audio, integración con OpenAI Whisper y modelo de respuesta.
+- **Sin base de datos** (logs y audios en disco local).
+
+```
+[Cliente Web] <---WebSocket---> [Servidor Node.js (Fastify)]
+                                      |---> [OpenAI Whisper (transcripción)]
+                                      |---> [Modelo IA (respuesta)]
+```
+
+## Tecnologías usadas
+
+- Node.js 16+
+- Fastify
+- WebSocket
+- OpenAI Whisper (API o local)
+- HTML, CSS, JS (frontend)
+
+## Requisitos previos
 
 - Node.js 16 o superior
 - npm
+- (Opcional) Acceso a OpenAI Whisper o modelo local
 
-## Instalación local
+## Instalación
 
 ```bash
+# Clonar el repositorio
+git clone <repo-url>
+cd audiohook-reference-implementation-main
+
 # Instalar dependencias
 npm install
 
 # Compilar el proyecto
 npm run build
-
-# Iniciar el servidor
-npm start
 ```
 
-El servidor se iniciará en http://localhost:8001 por defecto.
+## Variables de entorno
 
-## Configuración Manual en EC2
-
-1. **Preparar instancia EC2:**
-
-   - Lanzar una instancia EC2 con Amazon Linux 2
-   - Configurar grupo de seguridad para abrir el puerto 8001
-
-2. **Instalar Node.js:**
-
-   ```bash
-   curl -sL https://rpm.nodesource.com/setup_16.x | sudo bash -
-   sudo yum install -y nodejs
-   ```
-
-3. **Subir el código y ejecutar:**
-
-   ```bash
-   # En la instancia EC2
-   mkdir -p audiohook-server
-   cd audiohook-server
-
-   # Subir archivos (desde tu máquina local)
-   scp -r ./* ec2-user@tu-ip-ec2:~/audiohook-server/
-
-   # En la instancia EC2
-   cd ~/audiohook-server
-   npm install
-   npm run build
-
-   # Ejecutar el servidor
-   node dist/src/index.js
-   ```
-
-4. **Mantener el servidor ejecutándose (opcional):**
-
-   ```bash
-   # Instalar PM2
-   npm install -g pm2
-
-   # Iniciar con PM2
-   pm2 start dist/src/index.js --name audiohook
-   pm2 save
-   pm2 startup
-   ```
-
-## Variables de Entorno
-
-Crear un archivo `.env` en la raíz del proyecto con las siguientes variables:
+Crea un archivo `.env` en la raíz con:
 
 ```
 NODE_ENV=development  # o production
@@ -78,19 +55,43 @@ SERVERHOST=0.0.0.0
 LOG_ROOT_DIR=./logs
 ```
 
-## Pruebas
+## Cómo correrlo
 
-Para probar el servidor, puedes usar una herramienta como `wscat`:
+```bash
+npm start
+```
+
+El servidor quedará disponible en: [http://localhost:8001](http://localhost:8001)
+
+## Endpoints principales
+
+- **WebSocket de audio:**
+
+  - `ws://localhost:8001/api/v1/audiohook/ws`
+  - Headers requeridos: `audiohook-session-id` (UUID)
+
+- **Frontend web (chat):**
+
+  - `http://localhost:8001/` (sirve `public/index.html`)
+
+- **Healthcheck:**
+  - `GET /health/check`
+
+## Ejemplo de prueba rápida
 
 ```bash
 npm install -g wscat
 wscat -c "ws://localhost:8001/api/v1/audiohook/ws" -H "audiohook-session-id:12345678-1234-1234-1234-123456789012"
 ```
 
-## Monitoreo
+## Notas y recomendaciones para producción
 
-Para verificar que el servidor está en funcionamiento, comprueba el endpoint de salud:
+- Escalar el backend con balanceador de carga si se esperan muchas sesiones simultáneas.
+- Implementar persistencia en base de datos para logs y transcripciones si se requiere auditoría.
+- Añadir autenticación/autorización para ambientes reales.
+- Monitorear recursos y errores (integrar con Prometheus, Grafana, Sentry, etc.).
 
-```bash
-curl http://localhost:8001/health/check
-```
+---
+
+**Contacto:**
+Para dudas técnicas, revisar el código fuente o abrir un issue en el repositorio.

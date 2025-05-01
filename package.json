@@ -33,7 +33,7 @@
     "install": "0.13.0",
     "node-vad": "^1.1.4",
     "object-hash": "3.0.0",
-    "openai": "^3.3.0",
+    "openai": "^4.96.0",
     "pino": "8.11.0",
     "pino-pretty": "8.1.0",
     "tdigest": "0.1.2",
