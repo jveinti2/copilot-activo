@@ -3,58 +3,138 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chat RFP Guru</title>
+    <title>Copilot Activo EMT</title>
     <style>
       body {
         font-family: Arial, sans-serif;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-        background: #f5f5f5;
+        background-color: #e5ddd5;
+        margin: 0;
+        padding: 0.5rem;
       }
-      #messages {
-        background: white;
-        border-radius: 8px;
-        padding: 20px;
-        height: 400px;
-        overflow-y: auto;
-        margin-bottom: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      .message {
-        margin-bottom: 15px;
-        padding: 10px;
-        border-radius: 5px;
-      }
-      .transcript {
-        background: #e3f2fd;
-      }
-      .response {
-        background: #f3e5f5;
-      }
-      .timestamp {
-        font-size: 0.8em;
-        color: #666;
-      }
+
       #status {
-        padding: 8px;
+        padding: 0.5rem;
+        font-weight: bold;
+        font-size: 0.85rem;
         border-radius: 4px;
-        margin-bottom: 15px;
+        margin-bottom: 0.5rem;
       }
-      .connected {
-        background-color: #e8f5e9;
-        color: #2e7d32;
+
+      #status.connected {
+        background-color: #d4edda;
+        color: #155724;
       }
-      .disconnected {
-        background-color: #ffebee;
-        color: #c62828;
+
+      #status.disconnected {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+
+      .chat-container {
+        width: 100%;
+        max-width: 100%;
+        height: calc(100vh - 50px);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        overflow-y: auto;
+        padding-bottom: 1rem;
+      }
+
+      .message {
+        max-width: 85%;
+        padding: 0.5rem 0.75rem;
+        border-radius: 1rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        font-size: 0.95rem;
+        line-height: 1.4;
+      }
+
+      .message.user {
+        background-color: #f1f0f0;
+        align-self: flex-start;
+        border-bottom-left-radius: 0.2rem;
+      }
+
+      .message.bot {
+        background-color: #d1f8ce;
+        align-self: flex-end;
+        border-bottom-right-radius: 0.2rem;
+      }
+
+      .timestamp {
+        font-size: 0.65rem;
+        color: #555;
+        margin-top: 0.25rem;
+        text-align: right;
+      }
+
+      .hint {
+        font-size: 0.7rem;
+        font-style: italic;
+        color: #888;
+        margin-top: 0.25rem;
+      }
+
+      .document-reference {
+        font-size: 0.75rem;
+        font-style: italic;
+        color: #666;
+        margin-top: 0.5rem;
+        padding-top: 0.25rem;
+        border-top: 1px solid #ddd;
+      }
+
+      .transcript-preview {
+        display: inline;
+        color: #aaa;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-style: italic;
+        background-color: transparent;
+        border: none;
+        padding: 0;
+        text-align: left;
+      }
+
+      .transcript-full {
+        display: none;
+        margin-top: 0.4rem;
+        color: #444;
+        font-size: 0.85rem;
+      }
+
+      .doc-badge {
+        display: inline-block;
+        background: #e0e7ff;
+        color: #2d3a6e;
+        font-size: 0.72rem;
+        border-radius: 0.5rem;
+        padding: 0.1rem 0.5rem;
+        margin-left: 0.5rem;
+        vertical-align: middle;
+      }
+
+      @media screen and (max-width: 400px) {
+        .message {
+          font-size: 0.85rem;
+          padding: 0.4rem 0.6rem;
+        }
+        #status {
+          font-size: 0.75rem;
+        }
+        .timestamp,
+        .hint {
+          font-size: 0.6rem;
+        }
       }
     </style>
   </head>
   <body>
-    <h1>Chat RFP Guru</h1>
     <div id="status" class="disconnected">Estado: Desconectado</div>
-    <div id="messages"></div>
+    <div id="messages" class="chat-container"></div>
 
     <script>
       let ws;
@@ -64,6 +144,33 @@
       function formatTime(isoString) {
         const date = new Date(isoString || Date.now());
         return date.toLocaleTimeString();
+      }
+
+      function toggleTranscript(el) {
+        const full = el.nextElementSibling;
+        const isVisible = full.style.display === "block";
+        full.style.display = isVisible ? "none" : "block";
+        el.style.display = isVisible ? "inline" : "none";
+      }
+
+      function scrollToBottom() {
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }
+
+      function formatDocumentReference(text) {
+        if (!text) return { cleanText: "", badge: "" };
+
+        const docIndex = text.indexOf("- Documento:");
+        let cleanText = text;
+        let badge = "";
+
+        if (docIndex !== -1) {
+          cleanText = text.substring(0, docIndex).trim();
+          const docs = text.substring(docIndex + 1).trim(); // quita el guion
+          badge = `<span class="doc-badge">${docs}</span>`;
+        }
+
+        return { cleanText, badge };
       }
 
       function connect() {
@@ -77,7 +184,6 @@
           statusDiv.textContent = "Estado: Conectado";
           statusDiv.className = "connected";
           console.log("WebSocket conectado");
-          console.log("wsUrl:", wsUrl);
         };
 
         ws.onclose = () => {
@@ -96,29 +202,52 @@
           try {
             const data = JSON.parse(event.data);
             const messageDiv = document.createElement("div");
-            messageDiv.className = `message ${data.type}`;
+
+            // Usar la clase user para transcripciones y bot para respuestas
+            const messageType = data.type === "transcript" ? "user" : "bot";
+            messageDiv.className = `message ${messageType}`;
 
             const timestamp = formatTime(data.timestamp);
 
-            let messageHeader =
-              data.type === "transcript"
-                ? "🎤 Transcripción: "
-                : "🤖 Respuesta: ";
+            let messageContent = "";
 
-            messageDiv.innerHTML = `
-              <div class="timestamp">${timestamp}</div>
-              <div>${messageHeader}${data.text}</div>
-            `;
+            if (data.type === "transcript") {
+              // Para transcripciones, mostrar la pregunta sintetizada y el transcript completo
+              // Verificar si tenemos question, de lo contrario usar text
+              const question = data.question || data.text || "...";
+              const transcript =
+                data.trasncript || data.transcript || data.text || "";
+              const previewText = transcript.substring(0, 40) + "...";
 
+              messageContent = `
+                <div><strong>${question}</strong></div>
+                <div class="hint">basado en lo que dijiste...</div>
+                <button class="transcript-preview" onclick="toggleTranscript(this)">
+                  ${previewText}
+                </button>
+                <div class="transcript-full">
+                  ${transcript}
+                </div>
+                <div class="timestamp">${timestamp}</div>
+              `;
+            } else {
+              // Para respuestas del bot, con procesamiento de referencias a documentos
+              const { cleanText, badge } = formatDocumentReference(data.text);
+              messageContent = `
+                <div>${cleanText} ${badge}</div>
+                <div class="timestamp">${timestamp}</div>
+              `;
+            }
+
+            messageDiv.innerHTML = messageContent;
             messagesDiv.appendChild(messageDiv);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            scrollToBottom();
           } catch (error) {
             console.error("Error procesando mensaje:", error);
           }
         };
       }
 
-      // Iniciar conexión cuando se carga la página
       window.addEventListener("load", connect);
     </script>
   </body>

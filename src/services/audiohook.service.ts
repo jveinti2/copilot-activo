@@ -165,15 +165,10 @@ export const addAudiohookSampleRoute = (
           const completion = await extractQuestionFromTranscription(trasncript);
 
           if (completion !== "NO PREGUNTA") {
-            // mostrar un mnesaje para hacer ver que el agente esta pensando
-            broadcastMessage({
-              type: "thinking",
-              text: "Estoy pensando...",
-              timestamp: new Date().toISOString(),
-            });
             broadcastMessage({
               type: "transcript",
-              text: completion,
+              question: completion,
+              trasncript: trasncript,
               timestamp: new Date().toISOString(),
             });
 
