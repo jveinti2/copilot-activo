@@ -17,7 +17,7 @@ export async function getResponseGuru(text: string) {
 
   try {
     const formData = new FormData();
-    formData.append("name", "haceb");
+    formData.append("name", "haceb_v6");
     formData.append("question", text);
 
     console.log(`🔍 Enviando pregunta a RFP Guru: "${text}"`);

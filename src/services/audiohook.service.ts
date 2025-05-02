@@ -99,16 +99,16 @@ export const addAudiohookSampleRoute = (
       let captureStarted = false;
       let totalBytesReceived = 0;
       let lastLogTime = 0;
-      const LOG_INTERVAL_MS = 3000; // Solo mostrar resumen de bytes cada 3 segundos
+      const LOG_INTERVAL_MS = 3000; // Solo mostrar resumen de bytes cada 3 segundos que sirve para no saturar la consola
 
       // Variables para control de VAD
-      let vadSpeechDetected = false;
+      let vadSpeechDetected = false; // Indica si se ha detectado voz
       let vadSilenceStartTime = 0;
       const VAD_SILENCE_THRESHOLD_MS = 1500; // esto son 1.5 segundos
 
       // Añadir contador de bytes para filtrar segmentos muy cortos
       let totalBytesInSegment = 0;
-      const MIN_BYTES_THRESHOLD = 8000; // ~5 segundos de audio
+      const MIN_BYTES_THRESHOLD = 3200; // ~ 2 segundos de audio a 16kHz (3200 bytes)
 
       // Usar el socket WebSocket directamente
       const ws = connection.socket;
@@ -126,10 +126,7 @@ export const addAudiohookSampleRoute = (
         }
 
         isProcessingAudio = true;
-
-        console.log(
-          `📊 Procesando ${rawAudioBuffer.length} chunks de audio acumulado`
-        );
+        console.log(`🔄 Procesando audio acumulado...`);
 
         const pcmData = Buffer.concat(pcmAudioBuffer);
 

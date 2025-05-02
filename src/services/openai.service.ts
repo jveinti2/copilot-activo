@@ -25,23 +25,21 @@ export async function transcribeWithWhisper(audioFilePath: string) {
 
 export async function extractQuestionFromTranscription(transcription: string) {
   try {
-    const prompt = `
-      Eres un asistente que recibe transcripciones largas.
-      Debes identificar y reformular la verdadera pregunta que el usuario quiere hacer.
-      Ignora información irrelevante o comentarios casuales.
-      Si no se detecta una pregunta de valor, responde exactamente: "NO PREGUNTA".
-
-      Transcripción:
-      """${transcription}"""
-
-      Pregunta formulada:
-    `;
-
     const completion = await openai.responses.create({
       model: OpenAiModels.GPT_4O,
-      instructions:
-        "Eres un asistente que analiza llamadas de clientes y extrae la necesidad principal en una sola pregunta clara y directa de lo que el cliente quiere saber.",
-      input: prompt,
+      input: transcription,
+      instructions: `
+        Eres un asistente experto en análisis semántico de textos. Recibes transcripciones largas y desestructuradas.  
+        Tu tarea es identificar y extraer la pregunta principal o intención de búsqueda del usuario contenida en la transcripción.  
+        - Reformula la pregunta de forma breve, clara, específica y autocontenida, optimizada para búsquedas vectorizadas por similitud de coseno.  
+        - Elimina comentarios irrelevantes, explicaciones redundantes o datos que no aporten a la pregunta clave.  
+        - Si no hay una pregunta con valor informativo, responde exactamente: "NO PREGUNTA".  
+        Devuelve **únicamente** la pregunta formulada o "NO PREGUNTA", sin explicaciones, contexto ni formato adicional.
+
+        Transcripción:
+        """${transcription}"""
+
+        Pregunta formulada:`,
       temperature: 0.1,
     });
 
